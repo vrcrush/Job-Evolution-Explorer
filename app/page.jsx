@@ -340,7 +340,7 @@ async function fetchBLSWages() {
   for (let i = 0; i < ids.length; i += BATCH) {
     const batch = ids.slice(i, i + BATCH);
     try {
-      const res = await fetch("https://api.bls.gov/publicAPI/v1/timeseries/data/", {
+      const res = await fetch("/api/bls", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ seriesid: batch }),
       });
