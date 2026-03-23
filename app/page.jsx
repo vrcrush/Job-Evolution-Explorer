@@ -413,27 +413,35 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
     if (!selected || !analysis) return;
     setSharing(true);
     try {
+      // Step 1: Open LinkedIn FIRST — must be synchronous inside click handler
+      // or browser popup blocker will kill it
+      const text = encodeURIComponent(
+        `🔍 Is your job future-proof?
+
+${selected.title} has a ${selected.automationRisk}% automation risk and a ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected growth over the next 10 years.
+
+${analysis.headline}
+
+Explore the future of American work → https://00ia.com
+
+#FutureOfWork #AI #Labor #00IA`
+      );
+      window.open(
+        `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&summary=${text}`,
+        "_blank",
+        "width=600,height=600"
+      );
+
+      // Step 2: Then download the card async
       const w = getWage(selected);
       const canvas = generateShareCard(selected, analysis, w.value, w.live);
       canvas.toBlob(blob => {
-        // Auto-download the card
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         a.download = `00ia-${selected.title.replace(/\s+/g,"-").toLowerCase()}.png`;
         a.click();
         URL.revokeObjectURL(url);
-
-        // Open LinkedIn share dialog with pre-filled text
-        const text = encodeURIComponent(
-          `🔍 Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and a ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected growth over the next 10 years.\n\n${analysis.headline}\n\nExplore the future of American work → https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`
-        );
-        window.open(
-          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&text=${text}`,
-          "_blank",
-          "width=600,height=600"
-        );
-
         setSharing(false);
         setShowModal("linkedin");
       }, "image/png");
