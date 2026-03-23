@@ -73,113 +73,192 @@ async function claudeJSON(system, userMsg) {
   return JSON.parse(txt);
 }
 
-// ─── SHARE CARD (Canvas) ──────────────────────────────────────────────────────
+// ─── SHARE CARD (Canvas) — redesigned for LinkedIn scroll-stop ───────────────
 function generateShareCard(job, analysis, wage, live) {
   const W = 1200, H = 630;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
 
+  // ── Background ──
   ctx.fillStyle = "#020817";
   ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = "rgba(30,58,95,0.4)";
+  // Subtle dot grid
+  ctx.fillStyle = "rgba(30,58,95,0.35)";
+  for (let x = 0; x < W; x += 40) {
+    for (let y = 0; y < H; y += 40) {
+      ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Left color bar — risk color
+  const rc = riskColor(job.automationRisk);
+  const barGrad = ctx.createLinearGradient(0, 0, 0, H);
+  barGrad.addColorStop(0, rc);
+  barGrad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 0, 6, H);
+
+  // Top-right glow behind the big number
+  const glow = ctx.createRadialGradient(980, 200, 10, 980, 200, 320);
+  glow.addColorStop(0, `${rc}22`);
+  glow.addColorStop(1, "transparent");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── LEFT COLUMN ──────────────────────────────────────────── x: 60–660
+  // Category + SOC chip
+  ctx.fillStyle = "rgba(56,189,248,0.1)";
+  ctx.beginPath(); ctx.roundRect(60, 52, 320, 28, 5); ctx.fill();
+  ctx.strokeStyle = "rgba(56,189,248,0.25)";
   ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-
-  const grad = ctx.createLinearGradient(0, 0, W, 0);
-  grad.addColorStop(0, "#38bdf8");
-  grad.addColorStop(1, "rgba(56,189,248,0)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, 3);
-
-  ctx.font = "bold 13px monospace";
+  ctx.beginPath(); ctx.roundRect(60, 52, 320, 28, 5); ctx.stroke();
+  ctx.font = "bold 11px monospace";
   ctx.fillStyle = "#38bdf8";
-  ctx.fillText(`${job.category.toUpperCase()}  ·  SOC ${job.soc}`, 60, 70);
+  ctx.fillText(`${job.category.toUpperCase()}  ·  BLS SOC ${job.soc}`, 76, 71);
 
-  ctx.font = "bold 62px Georgia";
-  ctx.fillStyle = "#f1f5f9";
-  ctx.fillText(job.title, 60, 150);
+  // Job title — large
+  ctx.font = "bold 58px Georgia";
+  ctx.fillStyle = "#ffffff";
+  // Word-wrap title if long
+  const words = job.title.split(" ");
+  let line = "", lines = [], maxW = 580;
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; }
+    else line = test;
+  }
+  lines.push(line);
+  lines.forEach((l, i) => ctx.fillText(l, 60, 148 + i * 66));
 
-  ctx.fillStyle = "rgba(56,189,248,0.3)";
-  ctx.fillRect(60, 170, 600, 1);
+  const titleBottom = 148 + lines.length * 66;
 
-  const stats = [
-    { label: "AUTOMATION RISK", val: `${job.automationRisk}/100`, color: riskColor(job.automationRisk) },
-    { label: "10-YR GROWTH",    val: `${job.projectedGrowth > 0 ? "+" : ""}${job.projectedGrowth}%`, color: job.projectedGrowth >= 0 ? "#38bdf8" : "#f87171" },
-    { label: "MEDIAN WAGE",     val: fmtW(wage), color: "#f1f5f9" },
+  // Divider
+  ctx.fillStyle = "rgba(56,189,248,0.2)";
+  ctx.fillRect(60, titleBottom + 10, 560, 1);
+
+  // Headline quote
+  if (analysis?.headline) {
+    ctx.font = "italic 19px Georgia";
+    ctx.fillStyle = "#93c5fd";
+    const hl = `"${analysis.headline}"`;
+    // Word wrap headline
+    const hWords = hl.split(" ");
+    let hLine = "", hLines = [];
+    for (const w of hWords) {
+      const test = hLine ? `${hLine} ${w}` : w;
+      if (ctx.measureText(test).width > 540 && hLine) { hLines.push(hLine); hLine = w; }
+      else hLine = test;
+    }
+    hLines.push(hLine);
+    hLines.slice(0, 3).forEach((l, i) => ctx.fillText(l, 60, titleBottom + 46 + i * 28));
+  }
+
+  // Survival strategy label + text
+  const stratY = titleBottom + 160;
+  ctx.font = "bold 10px monospace";
+  ctx.fillStyle = "#4ade80";
+  ctx.fillText("◈ SURVIVAL STRATEGY", 60, stratY);
+  if (analysis?.survivalStrategy) {
+    ctx.font = "14px Georgia";
+    ctx.fillStyle = "#bbf7d0";
+    const sWords = analysis.survivalStrategy.split(" ");
+    let sLine = "", sLines = [];
+    for (const w of sWords) {
+      const test = sLine ? `${sLine} ${w}` : w;
+      if (ctx.measureText(test).width > 540 && sLine) { sLines.push(sLine); sLine = w; }
+      else sLine = test;
+    }
+    sLines.push(sLine);
+    sLines.slice(0, 3).forEach((l, i) => ctx.fillText(l, 60, stratY + 22 + i * 22));
+  }
+
+  // ── RIGHT COLUMN ─────────────────────────────────────────── x: 720–1140
+
+  // BIG automation risk number
+  ctx.font = "bold 130px Georgia";
+  ctx.fillStyle = rc;
+  ctx.textAlign = "right";
+  ctx.fillText(`${job.automationRisk}%`, 1140, 220);
+  ctx.textAlign = "left";
+
+  // Risk label
+  ctx.font = "bold 14px monospace";
+  ctx.fillStyle = rc;
+  ctx.textAlign = "right";
+  ctx.fillText("AUTOMATION RISK", 1140, 250);
+  ctx.textAlign = "left";
+
+  // Risk verdict sentence
+  const verdicts = {
+    LOW:      "This role is well-positioned for the future.",
+    MODERATE: "Significant transformation ahead — adapt now.",
+    HIGH:     "This job is running out of time.",
+    CRITICAL: "Automation will fundamentally eliminate this role.",
+  };
+  const verdict = verdicts[riskLabel(job.automationRisk)];
+  ctx.font = "italic 14px Georgia";
+  ctx.fillStyle = "#94a3b8";
+  ctx.textAlign = "right";
+  // word wrap verdict
+  const vWords = verdict.split(" ");
+  let vLine = "", vLines = [];
+  for (const w of vWords) {
+    const test = vLine ? `${vLine} ${w}` : w;
+    if (ctx.measureText(test).width > 390 && vLine) { vLines.push(vLine); vLine = w; }
+    else vLine = test;
+  }
+  vLines.push(vLine);
+  vLines.forEach((l, i) => ctx.fillText(l, 1140, 278 + i * 22));
+  ctx.textAlign = "left";
+
+  // Divider right
+  ctx.fillStyle = "rgba(30,58,95,0.6)";
+  ctx.fillRect(720, 320, 420, 1);
+
+  // Stats — growth + wage stacked
+  const statsR = [
+    { label: "10-YR GROWTH",   val: `${job.projectedGrowth > 0 ? "+" : ""}${job.projectedGrowth}%`, color: job.projectedGrowth >= 0 ? "#38bdf8" : "#f87171" },
+    { label: "MEDIAN WAGE",    val: fmtW(wage), color: "#f1f5f9" },
+    { label: "U.S. WORKFORCE", val: job.emp >= 1e6 ? `${(job.emp/1e6).toFixed(1)}M` : `${Math.round(job.emp/1000)}K`, color: "#f1f5f9" },
   ];
-  stats.forEach((s, i) => {
-    const x = 60 + i * 220, y = 200;
-    ctx.fillStyle = "rgba(10,25,41,0.9)";
-    ctx.beginPath(); ctx.roundRect(x, y, 200, 90, 6); ctx.fill();
-    ctx.strokeStyle = "rgba(30,58,95,0.8)";
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(x, y, 200, 90, 6); ctx.stroke();
-    ctx.font = "bold 10px monospace";
-    ctx.fillStyle = "#8b9eb8";
-    ctx.fillText(s.label, x + 14, y + 24);
-    ctx.font = "bold 28px Georgia";
+  statsR.forEach((s, i) => {
+    const sx = 720 + i * 145, sy = 340;
+    ctx.font = "bold 9px monospace";
+    ctx.fillStyle = "#64748b";
+    ctx.fillText(s.label, sx, sy);
+    ctx.font = "bold 26px Georgia";
     ctx.fillStyle = s.color;
-    ctx.fillText(s.val, x + 14, y + 62);
+    ctx.fillText(s.val, sx, sy + 34);
   });
 
-  const barX = 60, barY = 315, barW = 620, barH = 8;
-  ctx.fillStyle = "#1e293b";
-  ctx.beginPath(); ctx.roundRect(barX, barY, barW, barH, 4); ctx.fill();
-  const fillGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-  fillGrad.addColorStop(0, "#4ade80");
-  fillGrad.addColorStop(1, riskColor(job.automationRisk));
-  ctx.fillStyle = fillGrad;
-  ctx.beginPath(); ctx.roundRect(barX, barY, barW * (job.automationRisk / 100), barH, 4); ctx.fill();
+  // ── BOTTOM BAR ───────────────────────────────────────────────────────────
+  ctx.fillStyle = "rgba(15,39,68,0.8)";
+  ctx.fillRect(0, 570, W, 60);
+
+  // 00IA brand
+  ctx.font = "bold 24px Georgia";
+  ctx.fillStyle = "#38bdf8";
+  ctx.fillText("00IA", 60, 607);
 
   ctx.font = "bold 11px monospace";
-  ctx.fillStyle = riskColor(job.automationRisk);
-  ctx.fillText(`RISK: ${riskLabel(job.automationRisk)}`, barX, barY + 28);
+  ctx.fillStyle = "#475569";
+  ctx.fillText("THOUGHTS, CODE, AND COGNITION  ·  00IA.COM", 120, 607);
 
-  if (analysis?.headline) {
-    ctx.fillStyle = "rgba(12,31,53,0.9)";
-    ctx.beginPath(); ctx.roundRect(60, 360, 760, 80, 6); ctx.fill();
-    ctx.fillStyle = "#38bdf8";
-    ctx.fillRect(60, 360, 4, 80);
-    ctx.font = "italic 20px Georgia";
-    ctx.fillStyle = "#f1f5f9";
-    const hl = `"${analysis.headline}"`;
-    ctx.fillText(hl.length > 75 ? hl.slice(0, 72) + "…" : hl, 80, 407);
-  }
+  // CTA right
+  ctx.font = "bold 12px monospace";
+  ctx.fillStyle = "#f1f5f9";
+  ctx.textAlign = "right";
+  ctx.fillText("Is YOUR job future-proof? → 00ia.com", W - 60, 600);
+  ctx.textAlign = "left";
 
-  if (analysis?.emergingSkills?.length) {
-    ctx.font = "bold 10px monospace";
-    ctx.fillStyle = "#8b9eb8";
-    ctx.fillText("SKILLS TO DEVELOP", 60, 475);
-    analysis.emergingSkills.slice(0, 4).forEach((sk, i) => {
-      const x = 60 + i * 190, y = 490;
-      ctx.fillStyle = "rgba(56,189,248,0.08)";
-      ctx.beginPath(); ctx.roundRect(x, y, 175, 32, 4); ctx.fill();
-      ctx.strokeStyle = "rgba(56,189,248,0.2)";
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.roundRect(x, y, 175, 32, 4); ctx.stroke();
-      ctx.font = "11px monospace";
-      ctx.fillStyle = "#bae6fd";
-      const label = sk.length > 20 ? sk.slice(0, 18) + "…" : sk;
-      ctx.fillText(label, x + 10, y + 21);
-    });
-  }
-
-  ctx.fillStyle = "rgba(30,58,95,0.5)";
-  ctx.fillRect(60, 545, W - 120, 1);
-
-  ctx.font = "bold 22px Georgia";
-  ctx.fillStyle = "#38bdf8";
-  ctx.fillText("00IA", 60, 590);
-  ctx.font = "12px monospace";
-  ctx.fillStyle = "#8b9eb8";
-  ctx.fillText("00ia.com  ·  The Future of American Work", 110, 590);
-
-  ctx.font = "bold 10px monospace";
+  // BLS badge
+  ctx.font = "10px monospace";
   ctx.fillStyle = live ? "#4ade80" : "#fb923c";
-  ctx.fillText(live ? "⬤ LIVE BLS DATA" : "◯ BLS ESTIMATE", W - 200, 590);
+  ctx.textAlign = "right";
+  ctx.fillText(live ? "⬤ LIVE BLS DATA" : "◯ BLS ESTIMATE", W - 60, 616);
+  ctx.textAlign = "left";
 
   return canvas;
 }
