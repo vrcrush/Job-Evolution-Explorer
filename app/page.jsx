@@ -321,7 +321,7 @@ export default function App() {
   const [mapping, setMapping]    = useState(false);
   const [mapHint, setMapHint]    = useState("");
   const [sharing, setSharing]    = useState(false);
-  const [toast, setToast]        = useState("");
+  const [showModal, setShowModal] = useState(false);
   const detailRef = useRef(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -404,6 +404,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         a.href = url; a.download = `00ia-${selected.title.replace(/\s+/g,"-").toLowerCase()}.png`;
         a.click(); URL.revokeObjectURL(url);
         setSharing(false);
+        setShowModal("download");
       }, "image/png");
     } catch { setSharing(false); }
   };
@@ -434,8 +435,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         );
 
         setSharing(false);
-        setToast("Card downloaded! Attach it to your LinkedIn post.");
-        setTimeout(() => setToast(""), 5000);
+        setShowModal("linkedin");
       }, "image/png");
     } catch { setSharing(false); }
   };
@@ -464,15 +464,75 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         <div style={{position:"absolute",width:"100%",height:3,background:"#38bdf8",animation:"scan 9s linear infinite"}}/>
       </div>
 
-      {/* Toast notification */}
-      {toast && (
-        <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:200,
-          background:"#0a1929",border:"1px solid rgba(10,102,194,.5)",borderRadius:8,
-          padding:"12px 20px",fontFamily:"monospace",fontSize:12,color:"#93c5fd",
-          boxShadow:"0 8px 32px rgba(0,0,0,.6)",animation:"fadeIn .3s ease",
-          display:"flex",alignItems:"center",gap:10,whiteSpace:"nowrap"}}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#60a5fa"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-          {toast}
+      {/* Instruction Modal */}
+      {showModal && (
+        <div onClick={() => setShowModal(false)} style={{
+          position:"fixed",inset:0,zIndex:300,background:"rgba(2,8,23,.85)",
+          display:"flex",alignItems:"center",justifyContent:"center",animation:"fadeIn .2s ease",
+          backdropFilter:"blur(4px)",cursor:"pointer"
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background:"#0a1929",border:"1px solid #1e3a5f",borderRadius:12,
+            padding:"32px 36px",maxWidth:480,width:"90%",cursor:"default",
+            boxShadow:"0 24px 80px rgba(0,0,0,.8)",animation:"fadeIn .25s ease"
+          }}>
+            {/* Header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24}}>
+              <div>
+                <div style={{fontFamily:"monospace",fontSize:10,color:"#38bdf8",letterSpacing:3,marginBottom:6}}>
+                  {showModal === "linkedin" ? "◈ SHARING TO LINKEDIN" : "◈ CARD DOWNLOADED"}
+                </div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#f1f5f9"}}>
+                  {showModal === "linkedin" ? "Here's what just happened" : "Your card is ready"}
+                </div>
+              </div>
+              <button onClick={() => setShowModal(false)} style={{
+                background:"none",border:"none",color:"#475569",fontSize:20,cursor:"pointer",padding:"0 0 0 16px",lineHeight:1
+              }}>✕</button>
+            </div>
+
+            {/* Steps */}
+            <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:28}}>
+              {showModal === "linkedin" ? [
+                { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card (1200×630 PNG) was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
+                { n:"2", icon:"↗", color:"#60a5fa", title:"LinkedIn opened", desc:"A LinkedIn post dialog opened with pre-written text including the risk score, growth rate, and a link to 00ia.com" },
+                { n:"3", icon:"📎", color:"#4ade80", title:"Attach the image", desc:"In the LinkedIn composer, click the image icon and attach the downloaded card from your Downloads folder" },
+                { n:"4", icon:"✓",  color:"#4ade80", title:"Review and post", desc:"Check the pre-filled text, make any edits, then hit Post — the card image will stop the scroll" },
+              ] : [
+                { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
+                { n:"2", icon:"↗", color:"#60a5fa", title:"Post it anywhere", desc:"Upload the PNG to LinkedIn, Twitter/X, or any platform. It's 1200×630 — the ideal size for social sharing" },
+                { n:"3", icon:"✓",  color:"#4ade80", title:"Drive traffic", desc:'Add a link to 00ia.com in your post caption to send people to the full explorer' },
+              ].map(s => (
+                <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+                  <div style={{
+                    width:32,height:32,borderRadius:"50%",background:`${s.color}18`,
+                    border:`1px solid ${s.color}40`,display:"flex",alignItems:"center",
+                    justifyContent:"center",fontSize:14,color:s.color,flexShrink:0,fontWeight:700
+                  }}>{s.icon}</div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#f1f5f9",marginBottom:3}}>{s.title}</div>
+                    <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.6}}>{s.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            {showModal === "linkedin" && (
+              <div style={{background:"rgba(56,189,248,.06)",border:"1px solid rgba(56,189,248,.15)",borderRadius:8,padding:"12px 16px",marginBottom:16}}>
+                <div style={{fontFamily:"monospace",fontSize:10,color:"#38bdf8",letterSpacing:2,marginBottom:4}}>💡 TIP</div>
+                <div style={{fontSize:12,color:"#cbd5e1",lineHeight:1.6}}>
+                  Can't find the file? Check your <strong style={{color:"#f1f5f9"}}>Downloads</strong> folder or search for <strong style={{color:"#f1f5f9"}}>00ia-{selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png</strong>
+                </div>
+              </div>
+            )}
+
+            <button onClick={() => setShowModal(false)} style={{
+              width:"100%",background:"rgba(56,189,248,.1)",border:"1px solid rgba(56,189,248,.3)",
+              color:"#38bdf8",padding:"10px",borderRadius:7,fontFamily:"monospace",fontSize:12,
+              cursor:"pointer",letterSpacing:1,transition:"all .2s"
+            }}>Got it</button>
+          </div>
         </div>
       )}
 
