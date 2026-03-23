@@ -242,6 +242,7 @@ export default function App() {
   const [mapping, setMapping]    = useState(false);
   const [mapHint, setMapHint]    = useState("");
   const [sharing, setSharing]    = useState(false);
+  const [toast, setToast]        = useState("");
   const detailRef = useRef(null);
 
   useEffect(() => { setMounted(true); }, []);
@@ -328,6 +329,38 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
     } catch { setSharing(false); }
   };
 
+  const shareLinkedIn = () => {
+    if (!selected || !analysis) return;
+    setSharing(true);
+    try {
+      const w = getWage(selected);
+      const canvas = generateShareCard(selected, analysis, w.value, w.live);
+      canvas.toBlob(blob => {
+        // Auto-download the card
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `00ia-${selected.title.replace(/\s+/g,"-").toLowerCase()}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        // Open LinkedIn share dialog with pre-filled text
+        const text = encodeURIComponent(
+          `🔍 Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and a ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected growth over the next 10 years.\n\n${analysis.headline}\n\nExplore the future of American work → https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`
+        );
+        window.open(
+          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&text=${text}`,
+          "_blank",
+          "width=600,height=600"
+        );
+
+        setSharing(false);
+        setToast("Card downloaded! Attach it to your LinkedIn post.");
+        setTimeout(() => setToast(""), 5000);
+      }, "image/png");
+    } catch { setSharing(false); }
+  };
+
   return (
     <div style={{ background:"#020817", minHeight:"100vh", color:"#f1f5f9", fontFamily:"Georgia,serif" }}>
       <style>{`
@@ -351,6 +384,18 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
       <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:99,overflow:"hidden",opacity:.022}}>
         <div style={{position:"absolute",width:"100%",height:3,background:"#38bdf8",animation:"scan 9s linear infinite"}}/>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <div style={{position:"fixed",bottom:28,left:"50%",transform:"translateX(-50%)",zIndex:200,
+          background:"#0a1929",border:"1px solid rgba(10,102,194,.5)",borderRadius:8,
+          padding:"12px 20px",fontFamily:"monospace",fontSize:12,color:"#93c5fd",
+          boxShadow:"0 8px 32px rgba(0,0,0,.6)",animation:"fadeIn .3s ease",
+          display:"flex",alignItems:"center",gap:10,whiteSpace:"nowrap"}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#60a5fa"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          {toast}
+        </div>
+      )}
 
       <header style={{borderBottom:"1px solid #0f2744",padding:"22px 30px 18px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:12}}>
@@ -486,17 +531,30 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                     </h2>
                   </div>
                   {analysis && !analysis.error && (
-                    <button onClick={shareCard} disabled={sharing} style={{
-                      background: sharing?"rgba(56,189,248,.05)":"rgba(56,189,248,.1)",
-                      border:"1px solid rgba(56,189,248,.3)",color:"#38bdf8",
-                      padding:"8px 16px",borderRadius:6,fontFamily:"monospace",fontSize:11,
-                      cursor: sharing?"default":"pointer",display:"flex",alignItems:"center",gap:7,
-                      transition:"all .2s",letterSpacing:1,whiteSpace:"nowrap",marginTop:4
-                    }}>
-                      {sharing
-                        ? <><div style={{width:9,height:9,border:"1.5px solid #38bdf8",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Generating…</>
-                        : <>↓ Share Card</>}
-                    </button>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+                      <button onClick={shareCard} disabled={sharing} style={{
+                        background: sharing?"rgba(56,189,248,.05)":"rgba(56,189,248,.1)",
+                        border:"1px solid rgba(56,189,248,.3)",color:"#38bdf8",
+                        padding:"8px 14px",borderRadius:6,fontFamily:"monospace",fontSize:11,
+                        cursor: sharing?"default":"pointer",display:"flex",alignItems:"center",gap:7,
+                        transition:"all .2s",letterSpacing:1,whiteSpace:"nowrap"
+                      }}>
+                        {sharing
+                          ? <><div style={{width:9,height:9,border:"1.5px solid #38bdf8",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Generating…</>
+                          : <>↓ Download Card</>}
+                      </button>
+                      <button onClick={shareLinkedIn} disabled={sharing} style={{
+                        background: sharing?"rgba(10,102,194,.05)":"rgba(10,102,194,.15)",
+                        border:"1px solid rgba(10,102,194,.4)",color:"#60a5fa",
+                        padding:"8px 14px",borderRadius:6,fontFamily:"monospace",fontSize:11,
+                        cursor: sharing?"default":"pointer",display:"flex",alignItems:"center",gap:7,
+                        transition:"all .2s",letterSpacing:1,whiteSpace:"nowrap"
+                      }}>
+                        {sharing
+                          ? <><div style={{width:9,height:9,border:"1.5px solid #60a5fa",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Opening…</>
+                          : <><svg width="13" height="13" viewBox="0 0 24 24" fill="#60a5fa"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg> Share on LinkedIn</>}
+                      </button>
+                    </div>
                   )}
                 </div>
 
