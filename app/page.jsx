@@ -334,7 +334,7 @@ const fmtE = e => !e ? "—" : e >= 1e6 ? `${(e/1e6).toFixed(1)}M` : `${Math.rou
 
 // ─── BLS FETCH (batched — API allows max 50 series per call) ─────────────────
 async function fetchBLSWages() {
-  const ids = OCCUPATIONS.map(o => `OEUN000000000000${o.soc6}08`);
+  const ids = OCCUPATIONS.map(o => `OEUN0000000000000${o.soc6}04`);
   const BATCH = 50;
   const out = {};
   for (let i = 0; i < ids.length; i += BATCH) {
@@ -348,7 +348,7 @@ async function fetchBLSWages() {
       const json = await res.json();
       if (json.status !== "REQUEST_SUCCEEDED") continue;
       for (const s of json.Results?.series || []) {
-        const soc6 = s.seriesID.slice(16, 22);
+        const soc6 = s.seriesID.slice(17, 23);
         const val = parseFloat(s.data?.[0]?.value);
         if (!isNaN(val) && s.data?.[0]?.value !== "-") out[soc6] = Math.round(val);
       }
