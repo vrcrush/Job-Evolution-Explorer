@@ -1019,7 +1019,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         {/* RIGHT PANEL */}
         <div ref={detailRef} style={{flex:1,overflowY:"auto",padding: isMobile ? "16px" : "26px 30px"}}>
           {!selected ? (
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:14,opacity:.28}}>
+            <div style={{position:"sticky",top:"30%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,opacity:.28,padding:"40px 0"}}>
               <div style={{fontSize:42}}>◈</div>
               <div style={{fontFamily:"monospace",fontSize:12,letterSpacing:4,color:"#38bdf8"}}>SELECT AN OCCUPATION</div>
               <div style={{fontSize:13,color:"#c9d5e3",textAlign:"center",maxWidth:260,lineHeight:1.7}}>
