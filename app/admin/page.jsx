@@ -236,7 +236,7 @@ Pablo
               { n:"1", text:"Check Formspree dashboard for new submissions" },
               { n:"2", text:"Enter the subscriber email and occupation here" },
               { n:"3", text:"Click Generate — takes ~10 seconds" },
-              { n:"4", text:"Click "Copy Email Draft" — full email ready to send" },
+              { n:"4", text:"Click the Copy Email Draft button — full email ready to send" },
               { n:"5", text:"Paste into Gmail/Outlook and hit send" },
             ].map(s => (
               <div key={s.n} style={{ display:"flex", gap:10, marginBottom:10, alignItems:"flex-start" }}>
