@@ -805,7 +805,6 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
               ] : [
                 { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
                 { n:"2", icon:"↗", color:"#60a5fa", title:"Post it anywhere", desc:"Upload the PNG to LinkedIn, Twitter/X, or any platform. It's 1200×630 — the ideal size for social sharing" },
-                { n:"3", icon:"✓",  color:"#4ade80", title:"You're all set", desc:'The card already includes 00ia.com — just post it and let it do the work.' },
               ].map(s => (
                 <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
                   <div style={{
