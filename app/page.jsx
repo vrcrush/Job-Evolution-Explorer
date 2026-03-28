@@ -862,16 +862,39 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
             )}
 
             {showModal === "linkedin" && selected && analysis && (
-              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&summary=${encodeURIComponent(`Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth.\n\n"${analysis.headline}"\n\nExplore: https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`)}`}
-                target="_blank" rel="noopener noreferrer"
-                onClick={() => setShowModal(false)}
-                style={{display:"block",width:"100%",background:"rgba(10,102,194,.15)",
-                  border:"1px solid rgba(10,102,194,.4)",color:"#60a5fa",
-                  padding:"10px",borderRadius:7,fontFamily:"monospace",fontSize:12,
-                  cursor:"pointer",letterSpacing:1,textAlign:"center",
-                  textDecoration:"none",marginBottom:10,boxSizing:"border-box"}}>
-                ↗ Open LinkedIn Post
-              </a>
+              isMobile ? (
+                // Mobile: copy button + instruction to open LinkedIn app
+                <div style={{marginBottom:10}}>
+                  <button onClick={() => {
+                    const text = `Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth over the next decade.\n\n"${analysis.headline}"\n\nExplore all 321 occupations → https://00ia.com\n\n#FutureOfWork #AI #CareerDevelopment #00IA`;
+                    navigator.clipboard.writeText(text).then(() => {
+                      document.getElementById("li-copy-btn").innerText = "✓ Text Copied!";
+                      setTimeout(() => { const b = document.getElementById("li-copy-btn"); if(b) b.innerText = "📋 Copy Post Text"; }, 2500);
+                    });
+                  }} id="li-copy-btn" style={{
+                    display:"block",width:"100%",background:"rgba(10,102,194,.15)",
+                    border:"1px solid rgba(10,102,194,.4)",color:"#60a5fa",
+                    padding:"10px",borderRadius:7,fontFamily:"monospace",fontSize:12,
+                    cursor:"pointer",letterSpacing:1,textAlign:"center",marginBottom:8,
+                    boxSizing:"border-box"
+                  }}>📋 Copy Post Text</button>
+                  <div style={{fontFamily:"monospace",fontSize:10,color:"#475569",textAlign:"center"}}>
+                    Then open LinkedIn app → New Post → Paste → attach the downloaded image
+                  </div>
+                </div>
+              ) : (
+                // Desktop: direct link
+                <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={() => setShowModal(false)}
+                  style={{display:"block",width:"100%",background:"rgba(10,102,194,.15)",
+                    border:"1px solid rgba(10,102,194,.4)",color:"#60a5fa",
+                    padding:"10px",borderRadius:7,fontFamily:"monospace",fontSize:12,
+                    cursor:"pointer",letterSpacing:1,textAlign:"center",
+                    textDecoration:"none",marginBottom:10,boxSizing:"border-box"}}>
+                  ↗ Open LinkedIn Post
+                </a>
+              )
             )}
 
             <button onClick={() => setShowModal(false)} style={{
