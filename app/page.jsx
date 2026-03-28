@@ -380,6 +380,22 @@ function generateShareCard(job, analysis, wage, live) {
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d");
 
+  // Polyfill roundRect for browsers that don't support it
+  if (!ctx.roundRect) {
+    ctx.roundRect = function(x, y, w, h, r) {
+      if (w < 2*r) r = w/2;
+      if (h < 2*r) r = h/2;
+      this.beginPath();
+      this.moveTo(x+r, y);
+      this.arcTo(x+w, y, x+w, y+h, r);
+      this.arcTo(x+w, y+h, x, y+h, r);
+      this.arcTo(x, y+h, x, y, r);
+      this.arcTo(x, y, x+w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
   // ── Background ──
   ctx.fillStyle = "#020817";
   ctx.fillRect(0, 0, W, H);
@@ -784,16 +800,15 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
               }}>✕</button>
             </div>
 
-            {/* Steps */}
             <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:28}}>
-              {showModal === "linkedin" ? [
+              {(showModal === "linkedin" ? [
                 { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
                 { n:"2", icon:"📎", color:"#60a5fa", title:"Attach the image", desc:"In the LinkedIn composer, click the image icon and attach the downloaded card from your Downloads folder" },
                 { n:"3", icon:"✓",  color:"#4ade80", title:"Review and post", desc:"Edit the pre-filled text as needed, then hit Post — the card stops the scroll" },
               ] : [
                 { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
                 { n:"2", icon:"↗", color:"#60a5fa", title:"Post it anywhere", desc:"Upload the PNG to LinkedIn, Twitter/X, or any platform. It's 1200×630 — the ideal size for social sharing" },
-              ].map(s => (
+              ]).map(s => (
                 <div key={s.n} style={{display:"flex",gap:14,alignItems:"flex-start"}}>
                   <div style={{
                     width:32,height:32,borderRadius:"50%",background:`${s.color}18`,
