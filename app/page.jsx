@@ -648,6 +648,8 @@ export default function App() {
   const [mapping, setMapping]    = useState(false);
   const [mapHint, setMapHint]    = useState("");
   const [sharing, setSharing]    = useState(false);
+  const [email, setEmail]        = useState("");
+  const [emailStatus, setEmailStatus] = useState("idle"); // idle | submitting | done | error
   const [showModal, setShowModal] = useState(false);
   const detailRef = useRef(null);
   const windowWidth = useWindowWidth();
@@ -1175,6 +1177,78 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                           "{analysis.survivalStrategy}"
                         </p>
                       </div>
+
+                      {/* ── Email Capture ── */}
+                      {emailStatus !== "done" && (
+                        <div style={{borderTop:"1px solid #0f2744",paddingTop:22,marginBottom:28}}>
+                          <div style={{background:"linear-gradient(135deg,#0c1f35,#0a1929)",border:"1px solid #1e3a5f",borderRadius:10,padding:"22px 24px"}}>
+                            <div style={{fontFamily:"monospace",fontSize:9,color:"#38bdf8",letterSpacing:3,marginBottom:8}}>◈ FREE 2035 REPORT</div>
+                            <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:700,color:"#f1f5f9",marginBottom:6}}>
+                              Get the full outlook for {selected.title}
+                            </div>
+                            <div style={{fontSize:12,color:"#94a3b8",lineHeight:1.7,marginBottom:16}}>
+                              A deeper breakdown of how this role evolves by 2035 — delivered to your inbox.
+                            </div>
+                            <div style={{display:"flex",gap:8,flexDirection: isMobile ? "column" : "row"}}>
+                              <input
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                onKeyDown={e => e.key === "Enter" && email && emailStatus === "idle" && submitEmail()}
+                                placeholder="your@email.com"
+                                style={{flex:1,background:"#020817",border:"1px solid #1e3a5f",borderRadius:6,
+                                  color:"#f1f5f9",padding:"10px 14px",fontFamily:"monospace",fontSize:12,
+                                  outline:"none",boxSizing:"border-box"}}
+                              />
+                              <button
+                                onClick={() => {
+                                  if (!email || emailStatus !== "idle") return;
+                                  setEmailStatus("submitting");
+                                  fetch("https://formspree.io/f/mlgwokra", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      email,
+                                      occupation: selected.title,
+                                      soc: selected.soc,
+                                      automationRisk: selected.automationRisk,
+                                      projectedGrowth: selected.projectedGrowth,
+                                      source: "00ia-job-explorer"
+                                    })
+                                  })
+                                  .then(r => r.ok ? setEmailStatus("done") : setEmailStatus("error"))
+                                  .catch(() => setEmailStatus("error"));
+                                }}
+                                disabled={!email || emailStatus === "submitting"}
+                                style={{background: emailStatus === "submitting" ? "rgba(56,189,248,.05)" : "rgba(56,189,248,.15)",
+                                  border:"1px solid rgba(56,189,248,.35)",color:"#38bdf8",
+                                  padding:"10px 20px",borderRadius:6,fontFamily:"monospace",fontSize:12,
+                                  cursor: !email || emailStatus === "submitting" ? "default" : "pointer",
+                                  whiteSpace:"nowrap",letterSpacing:1,display:"flex",alignItems:"center",gap:7,
+                                  transition:"all .2s"}}>
+                                {emailStatus === "submitting"
+                                  ? <><div style={{width:9,height:9,border:"1.5px solid #38bdf8",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Sending…</>
+                                  : <>→ Get My Report</>}
+                              </button>
+                            </div>
+                            {emailStatus === "error" && (
+                              <div style={{fontFamily:"monospace",fontSize:10,color:"#f87171",marginTop:8}}>
+                                Something went wrong — please try again.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {emailStatus === "done" && (
+                        <div style={{borderTop:"1px solid #0f2744",paddingTop:22,marginBottom:28}}>
+                          <div style={{background:"linear-gradient(135deg,#0a1f12,#050f1a)",border:"1px solid #14532d",borderRadius:10,padding:"22px 24px",textAlign:"center"}}>
+                            <div style={{fontSize:24,marginBottom:8}}>✓</div>
+                            <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:6}}>You're on the list</div>
+                            <div style={{fontSize:12,color:"#86efac",lineHeight:1.7}}>Check your inbox — your 2035 report for {selected.title} is on its way.</div>
+                          </div>
+                        </div>
+                      )}
 
                       {similarRoles.length > 0 && (
                         <div style={{borderTop:"1px solid #0f2744",paddingTop:22}}>
