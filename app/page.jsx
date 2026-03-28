@@ -731,12 +731,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
     } catch (e) { console.error(e); setSharing(false); }
   };
 
-  const linkedInUrl = selected && analysis ? (() => {
-    const liText = encodeURIComponent(
-      `Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth.\n\n"${analysis?.headline}"\n\nExplore: https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`
-    );
-    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&summary=${liText}`;
-  })() : "#";
+
 
   return (
     <div style={{ background:"#020817", minHeight:"100vh", color:"#f1f5f9", fontFamily:"Georgia,serif" }}>
@@ -823,8 +818,9 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
               </div>
             )}
 
-            {showModal === "linkedin" && (
-              <a href={linkedInUrl} target="_blank" rel="noopener noreferrer"
+            {showModal === "linkedin" && selected && analysis && (
+              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&summary=${encodeURIComponent(`Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth.\n\n"${analysis.headline}"\n\nExplore: https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`)}`}
+                target="_blank" rel="noopener noreferrer"
                 onClick={() => setShowModal(false)}
                 style={{display:"block",width:"100%",background:"rgba(10,102,194,.15)",
                   border:"1px solid rgba(10,102,194,.4)",color:"#60a5fa",
