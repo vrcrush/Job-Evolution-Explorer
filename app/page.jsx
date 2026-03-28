@@ -1204,6 +1204,9 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                     THOUGHTS,<br/>CODE,<br/>AND COGNITION.
                   </span>
                 </div>
+                <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid #0a1929",fontFamily:"monospace",fontSize:9,color:"#334155",lineHeight:1.8,letterSpacing:"0.5px"}}>
+                  Data: BLS Employment Projections 2022–2032 · OEWS Wages 2024 · Automation risk scores are editorial estimates, not official BLS figures · AI analysis is for informational purposes only.
+                </div>
               </div>
             );
           })()}
