@@ -234,7 +234,7 @@ Pablo
             <div style={{ fontFamily:"monospace", fontSize:9, color:"#38bdf8", letterSpacing:3, marginBottom:12 }}>HOW TO USE</div>
             {[
               { n:"1", text:"Check Formspree dashboard for new submissions" },
-              { n:"2", text:"Enter the subscriber's email and occupation here" },
+              { n:"2", text:"Enter the subscriber email and occupation here" },
               { n:"3", text:"Click Generate — takes ~10 seconds" },
               { n:"4", text:"Click "Copy Email Draft" — full email ready to send" },
               { n:"5", text:"Paste into Gmail/Outlook and hit send" },
