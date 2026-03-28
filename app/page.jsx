@@ -716,7 +716,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
       const w = getWage(selected);
       const canvas = generateShareCard(selected, analysis, w.value, w.live);
       canvas.toBlob(blob => {
-        // 1. Download card
+        // Download card
         const cardUrl = URL.createObjectURL(blob);
         const dl = document.createElement("a");
         dl.href = cardUrl;
@@ -725,24 +725,18 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         dl.click();
         document.body.removeChild(dl);
         setTimeout(() => URL.revokeObjectURL(cardUrl), 1000);
-
-        // 2. Open LinkedIn via anchor (never blocked unlike window.open)
-        const liText = encodeURIComponent(
-          `Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth.\n\n"${analysis.headline}"\n\nExplore: https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`
-        );
-        const li = document.createElement("a");
-        li.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&summary=${liText}`;
-        li.target = "_blank";
-        li.rel = "noopener noreferrer";
-        document.body.appendChild(li);
-        li.click();
-        document.body.removeChild(li);
-
         setSharing(false);
         setShowModal("linkedin");
       }, "image/png");
     } catch (e) { console.error(e); setSharing(false); }
   };
+
+  const linkedInUrl = selected && analysis ? (() => {
+    const liText = encodeURIComponent(
+      `Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth.\n\n"${analysis?.headline}"\n\nExplore: https://00ia.com\n\n#FutureOfWork #AI #Labor #00IA`
+    );
+    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://00ia.com")}&summary=${liText}`;
+  })() : "#";
 
   return (
     <div style={{ background:"#020817", minHeight:"100vh", color:"#f1f5f9", fontFamily:"Georgia,serif" }}>
@@ -798,10 +792,9 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
             {/* Steps */}
             <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:28}}>
               {showModal === "linkedin" ? [
-                { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card (1200×630 PNG) was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
-                { n:"2", icon:"↗", color:"#60a5fa", title:"LinkedIn opened", desc:"A LinkedIn post dialog opened with pre-written text including the risk score, growth rate, and a link to 00ia.com" },
-                { n:"3", icon:"📎", color:"#4ade80", title:"Attach the image", desc:"In the LinkedIn composer, click the image icon and attach the downloaded card from your Downloads folder" },
-                { n:"4", icon:"✓",  color:"#4ade80", title:"Review and post", desc:"Check the pre-filled text, make any edits, then hit Post — the card image will stop the scroll" },
+                { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
+                { n:"2", icon:"📎", color:"#60a5fa", title:"Attach the image", desc:"In the LinkedIn composer, click the image icon and attach the downloaded card from your Downloads folder" },
+                { n:"3", icon:"✓",  color:"#4ade80", title:"Review and post", desc:"Edit the pre-filled text as needed, then hit Post — the card stops the scroll" },
               ] : [
                 { n:"1", icon:"↓", color:"#38bdf8", title:"Card downloaded", desc:`Your share card was saved to your Downloads folder as "00ia-${selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png"` },
                 { n:"2", icon:"↗", color:"#60a5fa", title:"Post it anywhere", desc:"Upload the PNG to LinkedIn, Twitter/X, or any platform. It's 1200×630 — the ideal size for social sharing" },
@@ -828,6 +821,18 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                   Can't find the file? Check your <strong style={{color:"#f1f5f9"}}>Downloads</strong> folder or search for <strong style={{color:"#f1f5f9"}}>00ia-{selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png</strong>
                 </div>
               </div>
+            )}
+
+            {showModal === "linkedin" && (
+              <a href={linkedInUrl} target="_blank" rel="noopener noreferrer"
+                onClick={() => setShowModal(false)}
+                style={{display:"block",width:"100%",background:"rgba(10,102,194,.15)",
+                  border:"1px solid rgba(10,102,194,.4)",color:"#60a5fa",
+                  padding:"10px",borderRadius:7,fontFamily:"monospace",fontSize:12,
+                  cursor:"pointer",letterSpacing:1,textAlign:"center",
+                  textDecoration:"none",marginBottom:10,boxSizing:"border-box"}}>
+                ↗ Open LinkedIn Post
+              </a>
             )}
 
             <button onClick={() => setShowModal(false)} style={{
