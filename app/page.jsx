@@ -824,12 +824,27 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
             </div>
 
             {/* CTA */}
-            {showModal === "linkedin" && (
-              <div style={{background:"rgba(56,189,248,.06)",border:"1px solid rgba(56,189,248,.15)",borderRadius:8,padding:"12px 16px",marginBottom:16}}>
-                <div style={{fontFamily:"monospace",fontSize:10,color:"#38bdf8",letterSpacing:2,marginBottom:4}}>💡 TIP</div>
-                <div style={{fontSize:12,color:"#cbd5e1",lineHeight:1.6}}>
-                  Can't find the file? Check your <strong style={{color:"#f1f5f9"}}>Downloads</strong> folder or search for <strong style={{color:"#f1f5f9"}}>00ia-{selected?.title?.replace(/\s+/g,"-").toLowerCase()}.png</strong>
+            {showModal === "linkedin" && selected && analysis && (
+              <div style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{fontFamily:"monospace",fontSize:10,color:"#38bdf8",letterSpacing:2}}>✏ COPY THIS TEXT INTO YOUR POST</div>
+                  <button onClick={() => {
+                    const text = `Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth over the next decade.\n\n"${analysis.headline}"\n\nExplore all 321 occupations → https://00ia.com\n\n#FutureOfWork #AI #CareerDevelopment #00IA`;
+                    navigator.clipboard.writeText(text).then(() => {
+                      document.getElementById("copy-btn").innerText = "✓ Copied!";
+                      setTimeout(() => { const b = document.getElementById("copy-btn"); if(b) b.innerText = "Copy"; }, 2000);
+                    });
+                  }} id="copy-btn" style={{
+                    background:"rgba(56,189,248,.1)",border:"1px solid rgba(56,189,248,.3)",
+                    color:"#38bdf8",padding:"4px 12px",borderRadius:4,fontFamily:"monospace",
+                    fontSize:10,cursor:"pointer",letterSpacing:1
+                  }}>Copy</button>
                 </div>
+                <div style={{
+                  background:"#030d1c",border:"1px solid #1e3a5f",borderRadius:7,
+                  padding:"14px 16px",fontSize:12,color:"#cbd5e1",lineHeight:1.8,
+                  fontFamily:"Georgia,serif",whiteSpace:"pre-wrap"
+                }}>{`Is your job future-proof?\n\n${selected.title} has a ${selected.automationRisk}% automation risk and ${selected.projectedGrowth > 0 ? "+" : ""}${selected.projectedGrowth}% projected 10-year growth over the next decade.\n\n"${analysis.headline}"\n\nExplore all 321 occupations → https://00ia.com\n\n#FutureOfWork #AI #CareerDevelopment #00IA`}</div>
               </div>
             )}
 
