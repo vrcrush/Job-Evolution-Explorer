@@ -1,6 +1,17 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// ─── RESPONSIVE HOOK ─────────────────────────────────────────────────────────
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  useEffect(() => {
+    const handle = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, []);
+  return width;
+}
+
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 const OCCUPATIONS = [
   { title: "Chief Executives", soc: "11-1011", soc6:"111011", projectedGrowth:    0, automationRisk:  15, category: "Management", emp:   197400, seedWage:  213020 },
@@ -639,6 +650,7 @@ export default function App() {
   const [sharing, setSharing]    = useState(false);
   const [showModal, setShowModal] = useState(false);
   const detailRef = useRef(null);
+  const windowWidth = useWindowWidth();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -649,6 +661,7 @@ export default function App() {
   }, []);
 
   if (!mounted) return null;
+  const isMobile = windowWidth < 768;
 
   const getWage = (occ) => {
     const live = wages[occ.soc6];
@@ -870,7 +883,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         </div>
       )}
 
-      <header style={{borderBottom:"1px solid #0f2744",padding:"22px 30px 18px"}}>
+      <header style={{borderBottom:"1px solid #0f2744",padding: isMobile ? "14px 16px 12px" : "22px 30px 18px"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",flexWrap:"wrap",gap:12}}>
           <div>
             <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6,flexWrap:"wrap"}}>
@@ -890,21 +903,21 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
               The Future of <span style={{color:"#38bdf8"}}>American Work</span>
             </h1>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:8,background:"#0a1929",border:"1px solid #0f2744",borderRadius:7,padding:"8px 14px"}}>
+          {!isMobile && <div style={{display:"flex",alignItems:"center",gap:8,background:"#0a1929",border:"1px solid #0f2744",borderRadius:7,padding:"8px 14px"}}>
             {wageStatus === "loading"  && <><div style={{width:7,height:7,border:"1.5px solid #38bdf8",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/><span style={{fontFamily:"monospace",fontSize:11,color:"#38bdf8"}}>Connecting to BLS API…</span></>}
             {wageStatus === "live"     && <><div style={{width:7,height:7,borderRadius:"50%",background:"#4ade80"}}/><span style={{fontFamily:"monospace",fontSize:11,color:"#4ade80"}}>Live · BLS OEWS 2024</span></>}
             {wageStatus === "fallback" && <><div style={{width:7,height:7,borderRadius:"50%",background:"#fb923c"}}/><span style={{fontFamily:"monospace",fontSize:11,color:"#fb923c"}}>BLS API unavailable · using published estimates</span></>}
             <div style={{width:1,height:20,background:"#0f2744",margin:"0 4px"}}/>
             <div style={{width:7,height:7,borderRadius:"50%",background:"#38bdf8"}}/>
             <span style={{fontFamily:"monospace",fontSize:11,color:"#a0aec0"}}>Projections · BLS EP Program</span>
-          </div>
+          </div>}
         </div>
       </header>
 
-      <div style={{display:"flex",minHeight:"calc(100vh - 110px)"}}>
+      <div style={{display:"flex",flexDirection: isMobile ? "column" : "row",minHeight: isMobile ? "auto" : "calc(100vh - 110px)"}}>
 
         {/* LEFT PANEL */}
-        <div style={{width:"min(380px,42%)",borderRight:"1px solid #0f2744",display:"flex",flexDirection:"column"}}>
+        <div style={{width: isMobile ? "100%" : "min(380px,42%)",borderRight: isMobile ? "none" : "1px solid #0f2744",borderBottom: isMobile ? "1px solid #0f2744" : "none",display:"flex",flexDirection:"column", maxHeight: isMobile ? "50vh" : "none"}}>
           <div style={{padding:"14px 18px",borderBottom:"1px solid #0f2744",background:"#030d1c"}}>
             <div style={{position:"relative",marginBottom:10}}>
               <input
@@ -981,7 +994,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
         </div>
 
         {/* RIGHT PANEL */}
-        <div ref={detailRef} style={{flex:1,overflowY:"auto",padding:"26px 30px"}}>
+        <div ref={detailRef} style={{flex:1,overflowY:"auto",padding: isMobile ? "16px" : "26px 30px"}}>
           {!selected ? (
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:14,opacity:.28}}>
               <div style={{fontSize:42}}>◈</div>
@@ -1004,7 +1017,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                     </h2>
                   </div>
                   {analysis && !analysis.error && (
-                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:4}}>
+                    <div style={{display:"flex",flexDirection: isMobile ? "column" : "row",gap:8,flexWrap:"wrap",marginTop:4}}>
                       <button onClick={shareCard} disabled={sharing} style={{
                         background: sharing?"rgba(56,189,248,.05)":"rgba(56,189,248,.1)",
                         border:"1px solid rgba(56,189,248,.3)",color:"#38bdf8",
@@ -1031,7 +1044,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                   )}
                 </div>
 
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:16}}>
+                <div style={{display:"grid",gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(3,1fr)",gap:12,marginBottom:16}}>
                   {[
                     { label:"MEDIAN WAGE",    val:fmtW(w.value), sub: w.live ? "● LIVE BLS OEWS" : "◯ BLS ESTIMATE", subColor: w.live?"#4ade80":"#94a3b8" },
                     { label:"U.S. WORKFORCE", val:fmtE(selected.emp), sub:"workers · OES" },
@@ -1095,7 +1108,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                         <p style={{lineHeight:1.8,color:"#f1f5f9",fontSize:14,margin:0}}>{analysis.outlook}</p>
                       </div>
 
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:18}}>
+                      <div style={{display:"grid",gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",gap:12,marginBottom:18}}>
                         <div style={{background:"#100a0a",border:"1px solid #2a1515",borderRadius:8,padding:"14px 16px"}}>
                           <div style={{fontFamily:"monospace",fontSize:9,color:"#f87171",letterSpacing:2,marginBottom:9}}>⚠ DISRUPTED BY</div>
                           {analysis.killedBy?.map((k,i)=>(
@@ -1139,7 +1152,7 @@ BLS Wage: ${fmtW(w.value)} (${w.live ? "live BLS OEWS" : "BLS estimate"}) | Work
                             <span style={{fontFamily:"monospace",fontSize:10,color:"#a0aec0",letterSpacing:3}}>EXPLORE SIMILAR ROLES</span>
                             <div style={{flex:1,height:1,background:"#0f2744"}}/>
                           </div>
-                          <div style={{display:"flex",gap:10}}>
+                          <div style={{display:"flex",flexDirection: isMobile ? "column" : "row",gap:10}}>
                             {similarRoles.map(job => (
                               <SimilarCard key={job.soc} job={job} wage={job.value} onClick={j => { setMapHint(""); analyze(j); window.scrollTo({top:0,behavior:"smooth"}); }}/>
                             ))}
