@@ -3,12 +3,13 @@ import { useState } from "react";
 import OCCUPATIONS_DATA from "../data/occupations.js";
 const OCCUPATIONS = [...OCCUPATIONS_DATA].map(o => o.title).sort();
 
-const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "00ia2035";
 
 export default function AdminPage() {
   const [pwd, setPwd]           = useState("");
   const [authed, setAuthed]     = useState(false);
   const [pwdError, setPwdError] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [token, setToken]       = useState("");
 
   const [recipientEmail, setRecipientEmail] = useState("");
   const [occupation, setOccupation]         = useState("");
@@ -19,9 +20,26 @@ export default function AdminPage() {
   const [report, setReport]     = useState(null);
   const [copied, setCopied]     = useState(false);
 
-  const handleLogin = () => {
-    if (pwd === PASSWORD) { setAuthed(true); setPwdError(false); }
-    else setPwdError(true);
+  const handleLogin = async () => {
+    if (!pwd) return;
+    setPwdLoading(true); setPwdError(false);
+    try {
+      const res = await fetch("/api/admin-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwd }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        setToken(data.token);
+        setAuthed(true);
+      } else {
+        setPwdError(true);
+      }
+    } catch {
+      setPwdError(true);
+    }
+    setPwdLoading(false);
   };
 
   const openAsPDF = () => {
@@ -149,6 +167,7 @@ Pablo
   // ── Login screen ──────────────────────────────────────────────────────────
   if (!authed) return (
     <div style={{ background:"#020817", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"Georgia,serif" }}>
+      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
       <div style={{ background:"#0a1929", border:"1px solid #1e3a5f", borderRadius:12, padding:"40px 48px", width:360 }}>
         <div style={{ fontFamily:"monospace", fontSize:10, color:"#38bdf8", letterSpacing:3, marginBottom:8 }}>◈ 00IA ADMIN</div>
         <div style={{ fontFamily:"'Playfair Display',serif", fontSize:24, fontWeight:900, color:"#f1f5f9", marginBottom:28 }}>Report Generator</div>
@@ -162,11 +181,16 @@ Pablo
             color:"#f1f5f9", padding:"10px 14px", fontFamily:"monospace", fontSize:13, outline:"none", boxSizing:"border-box", marginBottom:12 }}
         />
         {pwdError && <div style={{ fontFamily:"monospace", fontSize:11, color:"#f87171", marginBottom:10 }}>Incorrect password</div>}
-        <button onClick={handleLogin} style={{
+        <button onClick={handleLogin} disabled={pwdLoading} style={{
           width:"100%", background:"rgba(56,189,248,.15)", border:"1px solid rgba(56,189,248,.35)",
           color:"#38bdf8", padding:"11px", borderRadius:6, fontFamily:"monospace", fontSize:12,
-          cursor:"pointer", letterSpacing:1
-        }}>Enter</button>
+          cursor: pwdLoading ? "default" : "pointer", letterSpacing:1,
+          display:"flex", alignItems:"center", justifyContent:"center", gap:8
+        }}>
+          {pwdLoading
+            ? <><div style={{width:9,height:9,border:"1.5px solid #38bdf8",borderTopColor:"transparent",borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Verifying…</>
+            : "Enter"}
+        </button>
       </div>
     </div>
   );
