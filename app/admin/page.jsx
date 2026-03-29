@@ -1,33 +1,7 @@
 "use client";
 import { useState } from "react";
-
-const OCCUPATIONS = [
-  "Chief Executives", "General & Operations Managers", "Marketing Managers", "Sales Managers",
-  "Computer & IS Managers", "Financial Managers", "Medical & Health Services Managers",
-  "Human Resources Managers", "Software Developers", "Data Scientists", "Cybersecurity Analysts",
-  "AI & ML Engineers", "Web Developers", "Database Administrators", "Information Security Analysts",
-  "Operations Research Analysts", "Statisticians", "Aerospace Engineers", "Civil Engineers",
-  "Electrical Engineers", "Industrial Engineers", "Mechanical Engineers", "Architects",
-  "Registered Nurses", "Nurse Practitioners", "Physician Assistants", "Physicians & Surgeons",
-  "Physical Therapists", "Occupational Therapists", "Speech-Language Pathologists",
-  "Pharmacists", "Dental Hygienists", "Medical Assistants", "Home Health & Personal Care Aides",
-  "Lawyers", "Paralegals & Legal Assistants", "Accountants & Auditors", "Financial Analysts",
-  "Personal Financial Advisors", "Insurance Underwriters", "Loan Officers",
-  "Elementary School Teachers", "High School Teachers", "Postsecondary Teachers",
-  "Graphic Designers", "Multimedia Artists & Animators", "Writers & Authors", "Editors",
-  "Market Research Analysts", "Management Analysts", "HR Specialists", "Logisticians",
-  "Customer Service Reps", "Bookkeeping Clerks", "Secretaries & Admin Assistants",
-  "Retail Salespersons", "Cashiers", "Sales Representatives (B2B)", "Real Estate Agents",
-  "Truck Drivers (Heavy)", "Delivery Drivers", "Airline Pilots", "Bus Drivers (Transit)",
-  "Solar Panel Installers", "Wind Turbine Technicians", "Electricians", "Plumbers & Pipefitters",
-  "Carpenters", "Construction Laborers", "HVAC Mechanics & Installers",
-  "Automotive Service Technicians", "Industrial Machinery Mechanics",
-  "Chefs & Head Cooks", "Waiters & Waitresses", "Food Preparation Workers",
-  "Fitness Trainers & Instructors", "Hairdressers & Cosmetologists", "Childcare Workers",
-  "Social & Community Service Managers", "Child & Family Social Workers", "Mental Health Counselors",
-  "Police Officers & Detectives", "Firefighters", "Security Guards",
-  "Machinists", "Welders", "Chemical Plant Operators", "Power Plant Operators",
-].sort();
+import OCCUPATIONS_DATA from "../data/occupations.js";
+const OCCUPATIONS = [...OCCUPATIONS_DATA].map(o => o.title).sort();
 
 const PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "00ia2035";
 
@@ -48,6 +22,51 @@ export default function AdminPage() {
   const handleLogin = () => {
     if (pwd === PASSWORD) { setAuthed(true); setPwdError(false); }
     else setPwdError(true);
+  };
+
+  const openAsPDF = () => {
+    if (!report) return;
+    const occ = customOcc || occupation;
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${occ} — 2035 Outlook Report | 00IA</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, serif; color: #1a1a2e; line-height: 1.8; padding: 60px; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 28px; font-weight: 900; margin-bottom: 6px; color: #0f172a; }
+    h2 { font-size: 16px; font-weight: 700; margin: 28px 0 10px; color: #0f172a; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+    p { margin-bottom: 14px; font-size: 14px; color: #334155; }
+    .header { border-bottom: 3px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 32px; }
+    .meta { font-family: monospace; font-size: 11px; color: #64748b; letter-spacing: 2px; margin-bottom: 8px; }
+    .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-family: monospace; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; }
+    @media print { body { padding: 40px; } @page { margin: 1cm; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="meta">00IA · THE FUTURE OF AMERICAN WORK · ${new Date().getFullYear()}</div>
+    <h1>${occ}</h1>
+    <div class="meta">2035 OUTLOOK REPORT${recipientEmail ? " · PREPARED FOR: " + recipientEmail : ""}</div>
+  </div>
+  ${report.split("\n").map(line => {
+    if (line.startsWith("# ")) return \`<h1>\${line.slice(2)}</h1>\`;
+    if (line.startsWith("## ")) return \`<h2>\${line.slice(3)}</h2>\`;
+    if (line.trim() === "") return "";
+    return \`<p>\${line}</p>\`;
+  }).join("\n")}
+  <div class="footer">
+    <span>00IA.COM — THOUGHTS, CODE, AND COGNITION</span>
+    <span>Generated ${new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" })}</span>
+  </div>
+  <script>window.onload = () => window.print();<\/script>
+</body>
+</html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
   const generateReport = async () => {
@@ -270,17 +289,22 @@ Pablo
           {report && (
             <div style={{ animation:"fadeIn .4s ease" }}>
               {/* Action buttons */}
-              <div style={{ display:"flex", gap:8, marginBottom:12 }}>
+              <div style={{ display:"flex", gap:8, marginBottom:12, flexWrap:"wrap" }}>
                 <button onClick={copyReport} style={{
                   flex:1, background:"rgba(56,189,248,.1)", border:"1px solid rgba(56,189,248,.3)",
                   color:"#38bdf8", padding:"9px", borderRadius:6, fontFamily:"monospace", fontSize:11,
-                  cursor:"pointer", letterSpacing:1
-                }}>{copied ? "✓ Copied!" : "Copy Report"}</button>
+                  cursor:"pointer", letterSpacing:1, minWidth:120
+                }}>{copied ? "✓ Copied!" : "Copy Text"}</button>
                 <button onClick={copyEmailDraft} style={{
                   flex:1, background:"rgba(74,222,128,.1)", border:"1px solid rgba(74,222,128,.3)",
                   color:"#4ade80", padding:"9px", borderRadius:6, fontFamily:"monospace", fontSize:11,
-                  cursor:"pointer", letterSpacing:1
-                }}>📧 Copy Email Draft</button>
+                  cursor:"pointer", letterSpacing:1, minWidth:120
+                }}>📧 Email Draft</button>
+                <button onClick={openAsPDF} style={{
+                  flex:1, background:"rgba(251,146,60,.1)", border:"1px solid rgba(251,146,60,.3)",
+                  color:"#fb923c", padding:"9px", borderRadius:6, fontFamily:"monospace", fontSize:11,
+                  cursor:"pointer", letterSpacing:1, minWidth:120
+                }}>📄 Download PDF</button>
               </div>
 
               {/* Recipient info */}
