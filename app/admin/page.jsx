@@ -27,49 +27,49 @@ export default function AdminPage() {
   const openAsPDF = () => {
     if (!report) return;
     const occ = customOcc || occupation;
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${occ} — 2035 Outlook Report | 00IA</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Georgia, serif; color: #1a1a2e; line-height: 1.8; padding: 60px; max-width: 800px; margin: 0 auto; }
-    h1 { font-size: 28px; font-weight: 900; margin-bottom: 6px; color: #0f172a; }
-    h2 { font-size: 16px; font-weight: 700; margin: 28px 0 10px; color: #0f172a; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
-    p { margin-bottom: 14px; font-size: 14px; color: #334155; }
-    .header { border-bottom: 3px solid #0ea5e9; padding-bottom: 20px; margin-bottom: 32px; }
-    .meta { font-family: monospace; font-size: 11px; color: #64748b; letter-spacing: 2px; margin-bottom: 8px; }
-    .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-family: monospace; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; }
-    @media print { body { padding: 40px; } @page { margin: 1cm; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="meta">00IA · THE FUTURE OF AMERICAN WORK · ${new Date().getFullYear()}</div>
-    <h1>${occ}</h1>
-    <div class="meta">2035 OUTLOOK REPORT${recipientEmail ? " · PREPARED FOR: " + recipientEmail : ""}</div>
-  </div>
-  ${report.split("\n").map(line => {
-    if (line.startsWith("# ")) return \`<h1>\${line.slice(2)}</h1>\`;
-    if (line.startsWith("## ")) return \`<h2>\${line.slice(3)}</h2>\`;
-    if (line.trim() === "") return "";
-    return \`<p>\${line}</p>\`;
-  }).join("\n")}
-  <div class="footer">
-    <span>00IA.COM — THOUGHTS, CODE, AND COGNITION</span>
-    <span>Generated ${new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" })}</span>
-  </div>
-  <script>window.onload = () => window.print();<\/script>
-</body>
-</html>`;
-    const blob = new Blob([html], { type: "text/html" });
+    const bodyLines = report.split("\n").map(line => {
+      if (line.startsWith("# ")) return "<h1>" + line.slice(2) + "</h1>";
+      if (line.startsWith("## ")) return "<h2>" + line.slice(3) + "</h2>";
+      if (line.trim() === "") return "";
+      return "<p>" + line + "</p>";
+    }).join("\n");
+    const date = new Date().toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+    const recipient = recipientEmail ? " · PREPARED FOR: " + recipientEmail : "";
+    const html = [
+      "<!DOCTYPE html><html><head>",
+      "<meta charset='UTF-8'>",
+      "<title>" + occ + " — 2035 Outlook Report | 00IA</title>",
+      "<style>",
+      "* { margin:0; padding:0; box-sizing:border-box; }",
+      "body { font-family:Georgia,serif; color:#1a1a2e; line-height:1.8; padding:60px; max-width:800px; margin:0 auto; }",
+      "h1 { font-size:28px; font-weight:900; margin-bottom:6px; color:#0f172a; }",
+      "h2 { font-size:15px; font-weight:700; margin:28px 0 10px; color:#0f172a; text-transform:uppercase; letter-spacing:1px; border-bottom:2px solid #e2e8f0; padding-bottom:6px; }",
+      "p { margin-bottom:14px; font-size:14px; color:#334155; }",
+      ".header { border-bottom:3px solid #0ea5e9; padding-bottom:20px; margin-bottom:32px; }",
+      ".meta { font-family:monospace; font-size:11px; color:#64748b; letter-spacing:2px; margin-bottom:8px; }",
+      ".footer { margin-top:48px; padding-top:20px; border-top:1px solid #e2e8f0; font-family:monospace; font-size:10px; color:#94a3b8; display:flex; justify-content:space-between; }",
+      "@media print { body { padding:40px; } @page { margin:1cm; } }",
+      "</style></head><body>",
+      "<div class='header'>",
+      "<div class='meta'>00IA · THE FUTURE OF AMERICAN WORK · 2035</div>",
+      "<h1>" + occ + "</h1>",
+      "<div class='meta'>2035 OUTLOOK REPORT" + recipient + "</div>",
+      "</div>",
+      bodyLines,
+      "<div class='footer'>",
+      "<span>00IA.COM — THOUGHTS, CODE, AND COGNITION</span>",
+      "<span>Generated " + date + "</span>",
+      "</div>",
+      "<script>window.onload = function(){ window.print(); }<\/script>",
+      "</body></html>"
+    ].join("\n");
+    const blob = new Blob([html], { type:"text/html" });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
-  const generateReport = async () => {
+    const generateReport = async () => {
     const occ = customOcc || occupation;
     if (!occ) return;
     setLoading(true); setReport(null);
